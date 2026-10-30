@@ -156,6 +156,27 @@ body {
   }
 }
 
+/* Image styling inside chat bubbles */
+.message img,
+.chat-image {
+  max-width: 100%;
+  max-height: 280px;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+  margin-top: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.message.user .chat-image {
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  margin-bottom: 4px;
+}
+
+.message.bot img {
+  border: 1px solid var(--border-color);
+}
+
 /* User Message Bubble */
 .message.user {
   align-self: flex-end;
@@ -313,14 +334,90 @@ body {
   }
 }
 
+/* ================= Image Preview Area ================= */
+.image-preview-container {
+  padding: 10px 20px;
+  background: var(--primary-subtle);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+}
+
+.image-preview-container.hidden {
+  display: none !important;
+}
+
+.preview-card {
+  position: relative;
+  display: inline-block;
+}
+
+.preview-card img {
+  height: 60px;
+  width: 60px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 2px solid var(--primary);
+  display: block;
+}
+
+#remove-image-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  background-color: #ef4444;
+  color: #ffffff;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+#remove-image-btn:hover {
+  transform: scale(1.15);
+}
+
 /* ================= Chat Form ================= */
 #chat-form {
-  padding: 16px 20px;
+  padding: 14px 20px;
   background: #ffffff;
   border-top: 1px solid var(--border-color);
   display: flex;
   gap: 10px;
   align-items: center;
+}
+
+#attach-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  border: 1.5px solid var(--border-color);
+  background: #fbfbfe;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+#attach-btn:hover:not(:disabled) {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+
+#attach-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 #user-input {
@@ -364,6 +461,7 @@ body {
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 #send-btn:hover:not(:disabled) {
