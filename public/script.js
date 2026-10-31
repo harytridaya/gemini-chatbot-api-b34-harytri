@@ -8,8 +8,19 @@ const previewContainer = document.getElementById('image-preview-container');
 const previewImg = document.getElementById('preview-image');
 const removeImageBtn = document.getElementById('remove-image-btn');
 
+const historyList = document.getElementById('chat-history-list');
+const newChatBtn = document.getElementById('new-chat-btn');
+const menuBtn = document.getElementById('menu-btn');
+const sidebar = document.getElementById('sidebar');
+
+// Simpan tampilan awal chat untuk digunakan saat membuat percakapan baru
+const initialChatContent = chatBox.innerHTML;
+
 // Menyimpan riwayat percakapan untuk dikirim ke backend
 const conversation = [];
+
+// Menyimpan ID chat aktif dari database Supabase
+let currentChatId = null;
 
 // Menyimpan data gambar yang sedang dipilih sebelum dikirim
 let currentImage = null; // { data: base64String, mimeType: string, dataUrl: string }
@@ -91,6 +102,133 @@ form.addEventListener('submit', async function (e) {
   // Kunci form sementara untuk mencegah spam request
   setInputState(false);
 
+
+  async function loadChatHistory() {
+    if (!historyList) return;
+
+    try {
+      const response = await fetch('/api/chats');
+
+      if (!response.ok) {
+        throw new Error('Gagal mengambil riwayat percakapan');
+      }
+
+      const chats = await response.json();
+
+      historyList.innerHTML = '';
+
+      if (chats.length === 0) {
+        historyList.innerHTML =
+          '<p class="empty-history">Belum ada percakapan</p>';
+        return;
+      }
+
+      chats.forEach(chat => {
+        const item = document.createElement('button');
+
+        item.className = 'history-item';
+        item.textContent = chat.title;
+        item.type = 'button';
+
+        if (chat.id === currentChatId) {
+          item.classList.add('active');
+        }
+
+        item.addEventListener('click', () => openChat(chat.id));
+
+        historyList.appendChild(item);
+      });
+
+    } catch (error) {
+      console.error('Error loadChatHistory:', error);
+      historyList.innerHTML =
+        '<p class="empty-history">Gagal memuat riwayat</p>';
+    }
+  }
+
+
+  // Membuka percakapan yang dipilih
+  async function openChat(chatId) {
+    try {
+      const response = await fetch(`/api/chats/${chatId}/messages`);
+
+      if (!response.ok) {
+        throw new Error('Gagal mengambil pesan');
+      }
+
+      const messages = await response.json();
+
+      currentChatId = chatId;
+      conversation.length = 0;
+      chatBox.innerHTML = '';
+
+      messages.forEach(message => {
+        conversation.push({
+          role: message.role,
+          text: message.content
+        });
+
+        if (message.role === 'user') {
+          appendUserMessage(message.content, null);
+        } else {
+          const botMessage = document.createElement('div');
+          botMessage.classList.add('message', 'bot');
+          botMessage.innerHTML = renderMarkdown(message.content);
+          chatBox.appendChild(botMessage);
+        }
+      });
+
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      await loadChatHistory();
+
+      // Tutup sidebar pada tampilan mobile
+      if (sidebar) sidebar.classList.remove('open');
+
+    } catch (error) {
+      console.error('Error openChat:', error);
+      alert('Gagal membuka percakapan.');
+    }
+  }
+
+
+  // Membuat percakapan baru
+  function startNewChat() {
+    currentChatId = null;
+    conversation.length = 0;
+
+    chatBox.innerHTML = initialChatContent;
+
+    clearImageAttachment();
+
+    if (input) input.value = '';
+
+    loadChatHistory();
+
+    if (sidebar) sidebar.classList.remove('open');
+
+    if (input) input.focus();
+  }
+
+
+  // Tombol percakapan baru
+  if (newChatBtn) {
+    newChatBtn.addEventListener('click', startNewChat);
+  }
+
+
+  // Tombol menu untuk tampilan mobile
+  if (menuBtn && sidebar) {
+    menuBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+    });
+  }
+
+
+  // Muat riwayat ketika aplikasi pertama kali dibuka
+  loadChatHistory();
+
+
   try {
     // 3. Kirim request POST ke endpoint /api/chat
     const response = await fetch('/api/chat', {
@@ -98,7 +236,7 @@ form.addEventListener('submit', async function (e) {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ conversation })
+      body: JSON.stringify({ conversation, chat_id: currentChatId })
     });
 
     if (!response.ok) {
@@ -106,6 +244,12 @@ form.addEventListener('submit', async function (e) {
     }
 
     const data = await response.json();
+
+    // Simpan chat_id yang dikembalikan server untuk pesan berikutnya
+    if (data && data.chat_id) {
+      currentChatId = data.chat_id;
+      await loadChatHistory();
+    }
 
     // 4. Ganti animasi loading dengan teks markdown (mendukung gambar dari bot)
     if (data && data.result) {
