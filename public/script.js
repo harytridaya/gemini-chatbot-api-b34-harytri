@@ -13,7 +13,7 @@ const newChatBtn = document.getElementById('new-chat-btn');
 const menuBtn = document.getElementById('menu-btn');
 const sidebar = document.getElementById('sidebar');
 
-// Simpan tampilan awal chat untuk digunakan saat membuat percakapan baru
+// Simpan tampilan awal chat (EduChat AI welcome card)
 const initialChatContent = chatBox.innerHTML;
 
 // Menyimpan riwayat percakapan untuk dikirim ke backend
@@ -67,6 +67,122 @@ function clearImageAttachment() {
   if (previewContainer) previewContainer.classList.add('hidden');
 }
 
+// Mengambil daftar seluruh riwayat percakapan dari server
+async function loadChatHistory() {
+  if (!historyList) return;
+
+  try {
+    const response = await fetch('/api/chats');
+
+    if (!response.ok) {
+      throw new Error('Gagal mengambil riwayat percakapan');
+    }
+
+    const chats = await response.json();
+    historyList.innerHTML = '';
+
+    if (!Array.isArray(chats) || chats.length === 0) {
+      historyList.innerHTML = '<p class="history-empty">Belum ada sesi belajar</p>';
+      return;
+    }
+
+    chats.forEach(chat => {
+      const item = document.createElement('button');
+      item.className = 'history-item';
+      item.type = 'button';
+
+      if (chat.id === currentChatId) {
+        item.classList.add('active');
+      }
+
+      item.innerHTML = `
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span>${escapeHtml(chat.title || 'Sesi Belajar')}</span>
+      `;
+
+      item.addEventListener('click', () => openChat(chat.id));
+      historyList.appendChild(item);
+    });
+
+  } catch (error) {
+    console.error('Error loadChatHistory:', error);
+    historyList.innerHTML = '<p class="history-empty">Gagal memuat riwayat</p>';
+  }
+}
+
+// Membuka percakapan tertentu berdasarkan ID
+async function openChat(chatId) {
+  try {
+    const response = await fetch(`/api/chats/${chatId}/messages`);
+
+    if (!response.ok) {
+      throw new Error('Gagal mengambil pesan percakapan');
+    }
+
+    const messages = await response.json();
+
+    currentChatId = chatId;
+    conversation.length = 0;
+    chatBox.innerHTML = '';
+
+    messages.forEach(message => {
+      conversation.push({
+        role: message.role,
+        text: message.content
+      });
+
+      if (message.role === 'user') {
+        appendUserMessage(message.content, null);
+      } else {
+        const botMessage = document.createElement('div');
+        botMessage.classList.add('message', 'bot');
+        botMessage.innerHTML = renderMarkdown(message.content);
+        chatBox.appendChild(botMessage);
+      }
+    });
+
+    chatBox.scrollTop = chatBox.scrollHeight;
+    await loadChatHistory();
+
+    // Tutup sidebar pada layar mobile setelah klik
+    if (sidebar) sidebar.classList.remove('open');
+
+  } catch (error) {
+    console.error('Error openChat:', error);
+    alert('Gagal membuka sesi percakapan.');
+  }
+}
+
+// Membuat percakapan baru (reset ke tampilan awal)
+function startNewChat() {
+  currentChatId = null;
+  conversation.length = 0;
+  chatBox.innerHTML = initialChatContent;
+  clearImageAttachment();
+
+  if (input) input.value = '';
+
+  loadChatHistory();
+
+  if (sidebar) sidebar.classList.remove('open');
+  if (input) input.focus();
+}
+
+// Event listener tombol percakapan baru
+if (newChatBtn) {
+  newChatBtn.addEventListener('click', startNewChat);
+}
+
+// Event listener tombol menu sidebar mobile
+if (menuBtn && sidebar) {
+  menuBtn.addEventListener('click', () => {
+    sidebar.classList.toggle('open');
+  });
+}
+
+// Form submit handler
 form.addEventListener('submit', async function (e) {
   e.preventDefault();
 
@@ -84,7 +200,7 @@ form.addEventListener('submit', async function (e) {
   // Susun objek pesan untuk percakapan
   const msgObj = {
     role: 'user',
-    text: userMessage || (attached ? 'Tolong analisis gambar ini.' : '')
+    text: userMessage || (attached ? 'Tolong analisis gambar/tugas ini.' : '')
   };
 
   if (attached) {
@@ -101,133 +217,6 @@ form.addEventListener('submit', async function (e) {
 
   // Kunci form sementara untuk mencegah spam request
   setInputState(false);
-
-
-  async function loadChatHistory() {
-    if (!historyList) return;
-
-    try {
-      const response = await fetch('/api/chats');
-
-      if (!response.ok) {
-        throw new Error('Gagal mengambil riwayat percakapan');
-      }
-
-      const chats = await response.json();
-
-      historyList.innerHTML = '';
-
-      if (chats.length === 0) {
-        historyList.innerHTML =
-          '<p class="empty-history">Belum ada percakapan</p>';
-        return;
-      }
-
-      chats.forEach(chat => {
-        const item = document.createElement('button');
-
-        item.className = 'history-item';
-        item.textContent = chat.title;
-        item.type = 'button';
-
-        if (chat.id === currentChatId) {
-          item.classList.add('active');
-        }
-
-        item.addEventListener('click', () => openChat(chat.id));
-
-        historyList.appendChild(item);
-      });
-
-    } catch (error) {
-      console.error('Error loadChatHistory:', error);
-      historyList.innerHTML =
-        '<p class="empty-history">Gagal memuat riwayat</p>';
-    }
-  }
-
-
-  // Membuka percakapan yang dipilih
-  async function openChat(chatId) {
-    try {
-      const response = await fetch(`/api/chats/${chatId}/messages`);
-
-      if (!response.ok) {
-        throw new Error('Gagal mengambil pesan');
-      }
-
-      const messages = await response.json();
-
-      currentChatId = chatId;
-      conversation.length = 0;
-      chatBox.innerHTML = '';
-
-      messages.forEach(message => {
-        conversation.push({
-          role: message.role,
-          text: message.content
-        });
-
-        if (message.role === 'user') {
-          appendUserMessage(message.content, null);
-        } else {
-          const botMessage = document.createElement('div');
-          botMessage.classList.add('message', 'bot');
-          botMessage.innerHTML = renderMarkdown(message.content);
-          chatBox.appendChild(botMessage);
-        }
-      });
-
-      chatBox.scrollTop = chatBox.scrollHeight;
-
-      await loadChatHistory();
-
-      // Tutup sidebar pada tampilan mobile
-      if (sidebar) sidebar.classList.remove('open');
-
-    } catch (error) {
-      console.error('Error openChat:', error);
-      alert('Gagal membuka percakapan.');
-    }
-  }
-
-
-  // Membuat percakapan baru
-  function startNewChat() {
-    currentChatId = null;
-    conversation.length = 0;
-
-    chatBox.innerHTML = initialChatContent;
-
-    clearImageAttachment();
-
-    if (input) input.value = '';
-
-    loadChatHistory();
-
-    if (sidebar) sidebar.classList.remove('open');
-
-    if (input) input.focus();
-  }
-
-
-  // Tombol percakapan baru
-  if (newChatBtn) {
-    newChatBtn.addEventListener('click', startNewChat);
-  }
-
-
-  // Tombol menu untuk tampilan mobile
-  if (menuBtn && sidebar) {
-    menuBtn.addEventListener('click', () => {
-      sidebar.classList.toggle('open');
-    });
-  }
-
-
-  // Muat riwayat ketika aplikasi pertama kali dibuka
-  loadChatHistory();
-
 
   try {
     // 3. Kirim request POST ke endpoint /api/chat
@@ -247,25 +236,27 @@ form.addEventListener('submit', async function (e) {
 
     // Simpan chat_id yang dikembalikan server untuk pesan berikutnya
     if (data && data.chat_id) {
+      const isNewChat = !currentChatId;
       currentChatId = data.chat_id;
-      await loadChatHistory();
+      if (isNewChat) {
+        await loadChatHistory();
+      }
     }
 
-    // 4. Ganti animasi loading dengan teks markdown (mendukung gambar dari bot)
+    // 4. Ganti animasi loading dengan teks balasan bot (markdown)
     if (data && data.result) {
       botMessageElement.innerHTML = renderMarkdown(data.result);
       conversation.push({ role: 'model', text: data.result });
     } else {
-      botMessageElement.textContent = 'Sorry, no response received.';
+      botMessageElement.textContent = 'Maaf, tidak ada respons dari EduChat AI.';
       conversation.pop(); // Rollback pesan user jika tidak ada respons
     }
   } catch (error) {
     console.error('Error fetching chat response:', error);
-    // 5. Tangani jika terjadi error koneksi / server
-    botMessageElement.textContent = 'Failed to get response from server.';
-    conversation.pop(); // Rollback pesan user jika error
+    botMessageElement.textContent = 'Gagal terhubung ke server EduChat AI. Silakan coba lagi.';
+    conversation.pop(); // Rollback jika error
   } finally {
-    // Aktifkan kembali input form dan scroll ke bawah
+    // Aktifkan kembali input form dan scroll ke paling bawah
     setInputState(true);
     chatBox.scrollTop = chatBox.scrollHeight;
   }
@@ -304,7 +295,7 @@ function createBotLoadingMessage() {
   const msg = document.createElement('div');
   msg.classList.add('message', 'bot');
   msg.innerHTML = `
-    <div class="typing-indicator" title="Thinking...">
+    <div class="typing-indicator" title="EduChat sedang berpikir...">
       <span></span>
       <span></span>
       <span></span>
@@ -324,7 +315,7 @@ function renderMarkdown(rawText) {
     const parsedHtml = marked.parse(rawText);
     return typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(parsedHtml) : parsedHtml;
   }
-  return rawText.replace(/\n/g, '<br/>');
+  return escapeHtml(rawText).replace(/\n/g, '<br/>');
 }
 
 /**
@@ -336,3 +327,15 @@ function setInputState(enabled) {
   if (attachBtn) attachBtn.disabled = !enabled;
   if (enabled) input.focus();
 }
+
+/**
+ * Helper sanitasi string sederhana
+ */
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Inisialisasi awal saat halaman dibuka
+loadChatHistory();

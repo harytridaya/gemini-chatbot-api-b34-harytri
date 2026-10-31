@@ -4,11 +4,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Triva Travel AI</title>
+  <title>EduChat AI - Asisten Belajar Siswa SMK Indonesia</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
     rel="stylesheet">
 
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -25,21 +25,36 @@
     <aside class="sidebar" id="sidebar">
 
       <div class="sidebar-header">
-        <h2>✦ Triva</h2>
-        <button id="new-chat-btn" type="button">+ Chat Baru</button>
+        <div class="sidebar-brand">
+          <div class="brand-avatar">🎓</div>
+          <div class="brand-text">
+            <h2>EduChat AI</h2>
+            <span class="brand-tag">Sahabat Vokasi SMK</span>
+          </div>
+        </div>
+        <button id="new-chat-btn" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>Mulai Chat Baru</span>
+        </button>
       </div>
 
       <div class="history-section">
-        <h3>RIWAYAT PERCAKAPAN</h3>
+        <h3>RIWAYAT BELAJAR</h3>
 
         <div id="chat-history-list">
-          <p class="history-empty">Belum ada percakapan</p>
+          <p class="history-empty">Belum ada sesi belajar</p>
         </div>
       </div>
 
       <div class="sidebar-footer">
-        <span>Triva Travel AI</span>
-        <small>Powered by Gemini & Supabase</small>
+        <div class="footer-badge">
+          <span>🇮🇩 SMK Bisa! SMK Hebat!</span>
+        </div>
+        <span class="footer-title">EduChat AI Vokasi</span>
+        <small>Mendukung Semua Kejuruan & Mapel</small>
       </div>
 
     </aside>
@@ -50,20 +65,32 @@
       <!-- HEADER -->
       <header class="chat-header">
 
-        <button id="menu-btn" type="button" aria-label="Buka riwayat">
-          ☰
+        <button id="menu-btn" type="button" aria-label="Buka riwayat belajar">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
         </button>
 
         <div class="avatar-wrapper">
-          <div class="header-avatar">✦</div>
+          <div class="header-avatar">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+              <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+            </svg>
+          </div>
           <span class="status-pulse"></span>
         </div>
 
         <div class="header-info">
-          <h1>Triva Travel AI</h1>
+          <div class="header-title-row">
+            <h1>EduChat AI</h1>
+            <span class="header-badge">Siswa SMK</span>
+          </div>
           <div class="status-text">
             <span class="status-dot"></span>
-            <span>Online • Siap membantu rencana liburanmu</span>
+            <span>Online • Mentor Belajar & Kesiapan Kerja Siswa SMK Indonesia 🇮🇩</span>
           </div>
         </div>
 
@@ -71,20 +98,33 @@
 
       <!-- CHAT BOX -->
       <div id="chat-box" class="chat-box">
-        <div class="message bot">
+        <div class="message bot welcome-card">
+          <div class="welcome-header">
+            <span class="badge-smk">🎓 Asisten Belajar Vokasi Terpadu</span>
+            <h3>Halo Sobat Vokasi! 👋</h3>
+            <p>
+              Saya <strong>EduChat AI</strong>, asisten dan teman belajarmu khusus untuk siswa <strong>Sekolah Menengah Kejuruan (SMK)</strong> di seluruh Indonesia.
+            </p>
+          </div>
+
           <p>
-            Halo! 👋 Saya <strong>Triva</strong>, travel assistant pribadi Anda.
-            Mau merencanakan liburan ke mana dan untuk berapa lama?
-            Anda juga bisa mengirim foto tempat wisata atau tiket
-            untuk saya bantu analisis!
+            Ada materi kejuruan yang ingin dipahami, butuh bimbingan tugas langkah demi langkah, tips persiapan <strong>PKL / Magang</strong>, atau mau konsultasi portofolio kejuruan? Yuk, tanyakan di sini!
           </p>
+
+          <div class="welcome-features">
+            <span class="feat-chip">💻 TKJ / RPL / SIJA</span>
+            <span class="feat-chip">🔧 TKR / TBSM / Permesinan</span>
+            <span class="feat-chip">📊 Akuntansi & Bisnis</span>
+            <span class="feat-chip">🌾 Pertanian & Agribisnis</span>
+            <span class="feat-chip">💼 Tips PKL & Interview Kerja</span>
+          </div>
         </div>
       </div>
 
       <!-- IMAGE PREVIEW -->
       <div id="image-preview-container" class="image-preview-container hidden">
         <div class="preview-card">
-          <img id="preview-image" src="" alt="Preview Gambar" />
+          <img id="preview-image" src="" alt="Preview Lampiran Gambar" />
           <button type="button" id="remove-image-btn" aria-label="Hapus gambar">✕</button>
         </div>
       </div>
@@ -94,7 +134,7 @@
 
         <input type="file" id="image-input" accept="image/*" style="display:none;" />
 
-        <button type="button" id="attach-btn" title="Kirim Gambar / Foto">
+        <button type="button" id="attach-btn" title="Kirim Foto Soal, Rangkaian, Kode, atau Lembar Tugas">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
             <rect width="18" height="18" x="3" y="3" rx="2" />
@@ -103,10 +143,10 @@
           </svg>
         </button>
 
-        <input type="text" id="user-input" placeholder="Tanyakan rencana liburanmu..." autocomplete="off" />
+        <input type="text" id="user-input" placeholder="Tanyakan materi kejuruan, tugas, persiapan PKL, atau kirim foto soal..." autocomplete="off" />
 
-        <button type="submit" id="send-btn">
-          <span>Send</span>
+        <button type="submit" id="send-btn" aria-label="Kirim Pesan">
+          <span>Kirim</span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
             stroke-linecap="round" stroke-linejoin="round">
             <line x1="22" y1="2" x2="11" y2="13"></line>
